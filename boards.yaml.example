@@ -1,0 +1,91 @@
+# Jira Work Dashboard - 보드 설정 예시
+# 이 파일을 boards.yaml 로 복사한 뒤 자기 환경에 맞게 수정하세요.
+#
+# Jira 상태를 대시보드의 4분류(pending/active/done/cancelled)로 매핑.
+# 기본은 Jira statusCategory(new/indeterminate/done) 사용.
+# cancelled는 삭제 감지(A) + Resolution 필드(B) + name_overrides로 판별.
+
+jira:
+  # 자기 회사 Atlassian 도메인 (https://<org>.atlassian.net)
+  host: https://your-org.atlassian.net
+
+  # 본인 Jira accountId
+  # 발급: https://<org>.atlassian.net/jira/people 에서 자기 프로필 → URL의 accountId 복사
+  # 또는 Claude에 "내 Jira accountId 알려줘" 입력 (Atlassian MCP 인증 후 jira_whoami 호출)
+  assignee_account_id: "000000:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+defaults:
+  # Jira statusCategory → 대시보드 4분류 매핑
+  category_map:
+    new: pending          # "할 일" 카테고리 → pending
+    indeterminate: active # "진행 중" 카테고리 → active
+    done: done            # "완료" 카테고리 → done
+
+  cancelled_detection:
+    # A. 플랜 파일은 있는데 Jira에서 이슈가 사라지면 cancelled
+    on_deletion: true
+    # B. Resolution 필드 값이 아래와 일치하면 cancelled
+    on_resolution:
+      - "Won't Do"
+      - "Cancelled"
+      - "Duplicate"
+
+# Google Drive 백업 루트 (선택)
+# 이 경로에 플랜 파일 사본이 자동 동기화됨. 사용 안 하려면 빈 문자열.
+google_drive_root: "/Users/USERNAME/Library/CloudStorage/GoogleDrive-EMAIL@gmail.com/내 드라이브/Plans"
+
+# 보드 매핑 — 각 Jira 프로젝트마다 1개씩
+boards:
+  # 예시 1: 단일 프로젝트, 단일 subproject
+  PROJ:
+    project_key: PROJ
+    board_id: 1                                              # Jira board ID (URL ?board=N)
+    session: my-session                                      # tmux 세션 이름 (선택, ccbot 연동 시)
+    parent_workspace: /Users/USERNAME/Documents/Workspace    # 로컬 작업 폴더
+    drive_folder: my-project                                 # Drive 백업 하위 폴더
+    subprojects:
+      - key: main
+        path: my-project                                     # parent_workspace 기준 상대 경로
+        description: "프로젝트 설명"
+    name_overrides: {}                                       # 상태 이름 → 분류 강제 매핑 (선택)
+
+  # 예시 2: 다중 subproject (mono-repo / multi-package)
+  MULTI:
+    project_key: MULTI
+    board_id: 2
+    session: multi-session
+    parent_workspace: /Users/USERNAME/Documents/MultiProject
+    drive_folder: multi
+    subprojects:
+      - key: backend
+        path: multi-backend
+        description: "NestJS API 서버"
+      - key: frontend
+        path: multi-frontend
+        description: "Next.js 웹 클라이언트"
+      - key: mobile
+        path: multi-mobile
+        description: "React Native 앱"
+    name_overrides: {}
+
+  # 예시 3: 비표준 워크플로우 (커스텀 상태 → 분류 강제 매핑)
+  CUSTOM:
+    project_key: CUSTOM
+    board_id: 3
+    session: custom-session
+    parent_workspace: /Users/USERNAME/Documents/Custom
+    drive_folder: custom
+    subprojects:
+      - key: app
+        path: custom-app
+        description: "메인 앱"
+    # 상태 이름이 statusCategory 와 다른 의미일 때 강제 매핑
+    # 예: "보류" 상태가 statusCategory=done 으로 분류되지만 실제로는 cancelled 의미
+    name_overrides:
+      "보류": cancelled
+      "장기 보류": cancelled
+    # 자동 분류 참고 메모 (실제 동작 영향 없음, 가독성용)
+    # pending:   할 일, 백로그
+    # active:    진행 중, 코드 리뷰
+    # done:      완료, 배포 완료
+    # cancelled: 보류, 장기 보류 (override)

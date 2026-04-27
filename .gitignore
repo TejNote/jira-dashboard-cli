@@ -1,0 +1,10 @@
+node_modules/
+state/dashboard.json
+state/*.lock
+.vitest/
+
+# 개인정보·시크릿 — 절대 커밋 금지
+boards.yaml
+.env
+.env.*
+!.env.example
