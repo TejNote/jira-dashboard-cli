@@ -1,4 +1,4 @@
-// ~/Documents/Claude/scripts/jira-dashboard/types.ts
+// ~/Documents/Personal/projects/jira-dashboard-cli/types.ts
 
 export type Category = 'pending' | 'active' | 'done' | 'cancelled';
 export type JiraStatusCategoryKey = 'new' | 'indeterminate' | 'done';
